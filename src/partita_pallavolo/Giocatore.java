@@ -14,10 +14,12 @@ public class Giocatore implements Runnable {
     private int idGiocatore;
     private int punti;
     private Random random; // Dichiarazione generatore di numeri casuali
+    private Arbitro arbitro;
     
-    public Giocatore(int idGiocatore) {
+    public Giocatore(int idGiocatore, Arbitro arbitro) {
         this.idGiocatore = idGiocatore;
         punti = 0;
+        this.arbitro = arbitro;
         random = new Random(); // Inizializza generatore di numeri casuali
     }
     
@@ -25,17 +27,32 @@ public class Giocatore implements Runnable {
         return idGiocatore;
     }
     
+    public int getPunti() {
+        return punti;
+    }
+    
     public void run() {
-        while (true) {
-            int num = random.nextInt(2) + 1;
-            if (num == 1) {
-                punti++;
-                System.out.println("Il giocatore: " + idGiocatore + " ha segnato! punteggio: " + punti);
-                Thread.currentThread().yield();
-            }
-            else {
-                System.out.println("Il giocatore: " + idGiocatore + " non ha segnato... punteggio: " + punti);
-                Thread.currentThread().yield();
+        while (!arbitro.isFine()) {
+            
+            arbitro.attendiTurno(idGiocatore);
+            
+            if (!arbitro.isFine()) {
+                
+                int num = random.nextInt(2) + 1;               
+                if (num == 1) {
+                    punti++;
+                    System.out.println("Il giocatore: " + idGiocatore + " ha segnato! punteggio: " + punti);
+                    
+                    // Verifica se il punto determina la vittoria
+                    if (arbitro.assegnaPunto(idGiocatore, punti)) {
+                        break;
+                    }
+                } else {
+                    System.out.println("Il giocatore: " + idGiocatore + " non ha segnato... punteggio: " + punti);
+                }
+                
+                // Passa il turno all'altro giocatore
+                arbitro.passaTurno();
             }
         }
     }
